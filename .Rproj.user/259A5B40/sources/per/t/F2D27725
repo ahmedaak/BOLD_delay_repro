@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1580811662424.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2113668304",
+    "id" : "F2D27725",
+    "lastKnownWriteTime" : 1580813364,
+    "last_content_update" : 1580813364958,
+    "path" : "S:/AG/AG-CSB_NeuroRad2/khalila/PROJECTS/BD_REPRO/ANALYSIS/5_gethm_mean.R",
+    "project_path" : "5_gethm_mean.R",
+    "properties" : {
+        "cursorPosition" : "30,39",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : true,
+    "source_window" : "",
+    "type" : "r_source"
+}

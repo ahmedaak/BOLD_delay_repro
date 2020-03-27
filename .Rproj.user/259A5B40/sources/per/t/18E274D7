@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1564754333337.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1954915331",
+    "id" : "18E274D7",
+    "lastKnownWriteTime" : 1582034467,
+    "last_content_update" : 1582034467619,
+    "path" : "S:/AG/AG-CSB_NeuroRad2/khalila/PROJECTS/BD_REPRO/ANALYSIS/6_plot_BD_vals.R",
+    "project_path" : "6_plot_BD_vals.R",
+    "properties" : {
+        "cursorPosition" : "145,42",
+        "scrollLine" : "117",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 4,
+    "source_on_save" : true,
+    "source_window" : "",
+    "type" : "r_source"
+}

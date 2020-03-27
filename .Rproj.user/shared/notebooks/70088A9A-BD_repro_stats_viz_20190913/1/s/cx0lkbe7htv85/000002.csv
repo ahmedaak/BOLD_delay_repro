@@ -1,0 +1,6 @@
+"0","# rearrange levels"
+"0","temp_df_subs$vt <- factor(temp_df_subs$vt, levels(temp_df_subs$vt)[c(2,3,1)])"
+"0","temp_df_subs$cens <- factor(temp_df_subs$cens, levels(temp_df_subs$cens)[c(2,1)])"
+"0",""
+"0","# build mixed model - linear mixed model (NB: predictors scaled)"
+"0","model1 <- lmer(diffvals ~ vt + type + FDmean + tr + I(int/10) + I(length/600) + cens + (1|subject) + (1|study), data = temp_df_subs)"

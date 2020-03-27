@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1582011925498.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "53|121|222|0|\n370|129|404|0|\n",
+    "hash" : "674776405",
+    "id" : "ABC8022A",
+    "lastKnownWriteTime" : 1582019107,
+    "last_content_update" : 1582019107722,
+    "path" : "S:/AG/AG-CSB_NeuroRad2/khalila/PROJECTS/BD_REPRO/ANALYSIS/BD_repro_stats_viz_20200205.Rmd",
+    "project_path" : "BD_repro_stats_viz_20200205.Rmd",
+    "properties" : {
+        "cursorPosition" : "523,63",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}
