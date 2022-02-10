@@ -1,0 +1,13 @@
+sub-04/TSA_CoR_cens.nii.gz
+sub-06/TSA_CoR_cens.nii.gz
+sub-07/TSA_CoR_cens.nii.gz
+sub-09/TSA_CoR_cens.nii.gz
+sub-12/TSA_CoR_cens.nii.gz
+sub-13/TSA_CoR_cens.nii.gz
+sub-17/TSA_CoR_cens.nii.gz
+sub-19/TSA_CoR_cens.nii.gz
+sub-20/TSA_CoR_cens.nii.gz
+sub-21/TSA_CoR_cens.nii.gz
+sub-23/TSA_CoR_cens.nii.gz
+sub-24/TSA_CoR_cens.nii.gz
+sub-26/TSA_CoR_cens.nii.gz

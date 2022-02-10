@@ -1,0 +1,12 @@
+sub-control01/TSA_CoR.nii.gz
+sub-control02/TSA_CoR.nii.gz
+sub-control03/TSA_CoR.nii.gz
+sub-control04/TSA_CoR.nii.gz
+sub-control05/TSA_CoR.nii.gz
+sub-control06/TSA_CoR.nii.gz
+sub-control07/TSA_CoR.nii.gz
+sub-control08/TSA_CoR.nii.gz
+sub-control09/TSA_CoR.nii.gz
+sub-control10/TSA_CoR.nii.gz
+sub-control11/TSA_CoR.nii.gz
+sub-control12/TSA_CoR.nii.gz

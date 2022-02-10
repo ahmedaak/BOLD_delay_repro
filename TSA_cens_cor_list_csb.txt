@@ -1,0 +1,12 @@
+C01/TSA_CoR_cens.nii.gz
+C02/TSA_CoR_cens.nii.gz
+C03/TSA_CoR_cens.nii.gz
+C04/TSA_CoR_cens.nii.gz
+C05/TSA_CoR_cens.nii.gz
+C06/TSA_CoR_cens.nii.gz
+C07/TSA_CoR_cens.nii.gz
+C08/TSA_CoR_cens.nii.gz
+C09/TSA_CoR_cens.nii.gz
+C10/TSA_CoR_cens.nii.gz
+C11/TSA_CoR_cens.nii.gz
+C12/TSA_CoR_cens.nii.gz

@@ -6,7 +6,7 @@ Authors:
 
 ## Background
 
-The pipeline consists of several bash + R scripts that performs various processing steps on resting-state fMRI data. 
+The pipeline consists of several bash + R scripts that perform various processing steps on resting-state fMRI data. 
 
 ## Directory structure
 

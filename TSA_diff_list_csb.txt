@@ -1,0 +1,12 @@
+C01/TSA_diff.nii.gz
+C02/TSA_diff.nii.gz
+C03/TSA_diff.nii.gz
+C04/TSA_diff.nii.gz
+C05/TSA_diff.nii.gz
+C06/TSA_diff.nii.gz
+C07/TSA_diff.nii.gz
+C08/TSA_diff.nii.gz
+C09/TSA_diff.nii.gz
+C10/TSA_diff.nii.gz
+C11/TSA_diff.nii.gz
+C12/TSA_diff.nii.gz

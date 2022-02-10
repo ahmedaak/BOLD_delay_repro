@@ -1,0 +1,12 @@
+sub-control01/TSA_cens_diff.nii.gz
+sub-control02/TSA_cens_diff.nii.gz
+sub-control03/TSA_cens_diff.nii.gz
+sub-control04/TSA_cens_diff.nii.gz
+sub-control05/TSA_cens_diff.nii.gz
+sub-control06/TSA_cens_diff.nii.gz
+sub-control07/TSA_cens_diff.nii.gz
+sub-control08/TSA_cens_diff.nii.gz
+sub-control09/TSA_cens_diff.nii.gz
+sub-control10/TSA_cens_diff.nii.gz
+sub-control11/TSA_cens_diff.nii.gz
+sub-control12/TSA_cens_diff.nii.gz

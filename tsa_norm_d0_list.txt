@@ -77,12 +77,10 @@ sub_08/D0/ANTS/TSA_norm.nii.gz
 sub_09/D0/ANTS/TSA_norm.nii.gz
 sub-09/D0/ANTS/TSA_norm.nii.gz
 sub_10/D0/ANTS/TSA_norm.nii.gz
-sub_11/D0/ANTS/TSA_norm.nii.gz
 sub_12/D0/ANTS/TSA_norm.nii.gz
 sub-12/D0/ANTS/TSA_norm.nii.gz
 sub_13/D0/ANTS/TSA_norm.nii.gz
 sub-13/D0/ANTS/TSA_norm.nii.gz
-sub_14/D0/ANTS/TSA_norm.nii.gz
 sub_15/D0/ANTS/TSA_norm.nii.gz
 sub_16/D0/ANTS/TSA_norm.nii.gz
 sub_17/D0/ANTS/TSA_norm.nii.gz

@@ -81,10 +81,8 @@ sub_07/D1/ANTS/TSA_norm.nii.gz
 sub_08/D1/ANTS/TSA_norm.nii.gz
 sub_09/D1/ANTS/TSA_norm.nii.gz
 sub_10/D1/ANTS/TSA_norm.nii.gz
-sub_11/D1/ANTS/TSA_norm.nii.gz
 sub_12/D1/ANTS/TSA_norm.nii.gz
 sub_13/D1/ANTS/TSA_norm.nii.gz
-sub_14/D1/ANTS/TSA_norm.nii.gz
 sub_15/D1/ANTS/TSA_norm.nii.gz
 sub_16/D1/ANTS/TSA_norm.nii.gz
 sub_17/D1/ANTS/TSA_norm.nii.gz

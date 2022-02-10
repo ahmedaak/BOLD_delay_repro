@@ -1,3 +1,0 @@
-"0","# test assumptions of mixed model (see https://ademos.people.uic.edu/Chapter18.html)"
-"0","    #1 LINEARITY"
-"0","    plot(resid(model1),temp_df_subs$diffvals)"

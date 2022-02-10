@@ -1,0 +1,12 @@
+sub-032401/TSA_cens_diff.nii.gz
+sub-032402/TSA_cens_diff.nii.gz
+sub-032403/TSA_cens_diff.nii.gz
+sub-032404/TSA_cens_diff.nii.gz
+sub-032405/TSA_cens_diff.nii.gz
+sub-032406/TSA_cens_diff.nii.gz
+sub-032407/TSA_cens_diff.nii.gz
+sub-032408/TSA_cens_diff.nii.gz
+sub-032409/TSA_cens_diff.nii.gz
+sub-032410/TSA_cens_diff.nii.gz
+sub-032411/TSA_cens_diff.nii.gz
+sub-032412/TSA_cens_diff.nii.gz

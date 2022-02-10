@@ -9,7 +9,7 @@ MAIN_DIR=~/CSB_NeuroRad2/khalila/PROJECTS/BD_REPRO
 DATA=~/CSB_NeuroRad2/khalila/PROJECTS/BD_REPRO/IMAGES
 
 # EPI template
-EPI=~/CSB_NeuroRad2/khalila/PROJECTS/BD_REPRO/TEMPLATES/AK_103_EPI_template_brain.nii.gz
+EPI=~/CSB_NeuroRad2/khalila/PROJECTS/BD_REPRO/ANALYSIS/TEMPLATES/AK_103_EPI_template_brain.nii.gz
 
 # venous sinus template
 VS=~/CSB_NeuroRad2/khalila/PROJECTS/BD_REPRO/ANALYSIS/TEMPLATES/venous_sinus_template.nii.gz
@@ -41,13 +41,13 @@ for i in `cat $MAIN_DIR/subjects_all.txt`
 		mkdir $DATA/$i/$x/TSA
 
 		# Perform TSA with rapidtide - WITHOUT motion censoring
-		rapidtide2 $DATA/$i/$x/rest.gin.nii.gz $DATA/$i/$x/TSA/rt -L -r -20,20 --limitoutput --multiproc --noglm --regressor=$DATA/$i/$x/vs_tc.txt;
+		rapidtide2 $DATA/$i/$x/rest.gin.nii.gz $DATA/$i/$x/TSA/rt -L -r -5,5 --limitoutput --multiproc --noglm --regressor=$DATA/$i/$x/vs_tc.txt;
 
 		# Create TSA (rapidtide) folder - WITH motion censoring
 		mkdir $DATA/$i/$x/TSA_C
 
 		# Perform TSA with rapidtide - WITH motion censoring
-		rapidtide2 $DATA/$i/$x/rest.gin.nii.gz $DATA/$i/$x/TSA_C/rt_c -L -r -20,20 --limitoutput --multiproc --noglm --regressor=$DATA/$i/$x/vs_tc.txt --tmask=$DATA/$i/$x/fd_bin.txt;
+		rapidtide2 $DATA/$i/$x/rest.gin.nii.gz $DATA/$i/$x/TSA_C/rt_c -L -r -5,5 --limitoutput --multiproc --noglm --regressor=$DATA/$i/$x/vs_tc.txt --tmask=$DATA/$i/$x/fd_bin.txt;
 
 	done
 done

@@ -1,7 +1,0 @@
-"0","#distribution of noise across segments"
-"0","noise_seg_perc <- rbind_glmer_qual_df_dvars %>% "
-"0","count(segment, noise) %>% "
-"0","mutate(perc = prop.table(n)*100) %>%      "
-"0","select(-n) %>%                            "
-"0","spread(noise, perc)  "
-"0","as.data.frame(noise_seg_perc)"

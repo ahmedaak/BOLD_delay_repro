@@ -1,0 +1,10 @@
+msc01/TSA_CoR_cens.nii.gz
+msc02/TSA_CoR_cens.nii.gz
+msc03/TSA_CoR_cens.nii.gz
+msc04/TSA_CoR_cens.nii.gz
+msc05/TSA_CoR_cens.nii.gz
+msc06/TSA_CoR_cens.nii.gz
+msc07/TSA_CoR_cens.nii.gz
+msc08/TSA_CoR_cens.nii.gz
+msc09/TSA_CoR_cens.nii.gz
+msc10/TSA_CoR_cens.nii.gz

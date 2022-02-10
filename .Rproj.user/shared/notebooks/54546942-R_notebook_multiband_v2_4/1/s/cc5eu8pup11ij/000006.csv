@@ -1,7 +1,0 @@
-"0","#distribution of structure clarity across segments"
-"0","sc_seg_perc <- rbind_glmer_qual_df_dvars %>% "
-"0","count(segment, structure_clarity) %>% "
-"0","mutate(perc = prop.table(n)*100) %>%      "
-"0","select(-n) %>%                            "
-"0","spread(structure_clarity, perc) "
-"0","as.data.frame(sc_seg_perc)"

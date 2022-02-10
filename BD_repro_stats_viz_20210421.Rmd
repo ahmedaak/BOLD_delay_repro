@@ -1,0 +1,685 @@
+---
+title: 'BOLD delay reproducibility project'
+author: "Ahmed Khalil, MD PhD"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+    number_sections: true
+    toc: true
+---
+
+```{r, message=FALSE, cache=FALSE, warning=FALSE, echo=FALSE, fig.width=6, fig.height=6, fig.align="center"}
+knitr::opts_chunk$set(echo = TRUE)
+setwd("S:/AG/AG-CSB_NeuroRad2/khalila/PROJECTS/BD_REPRO/ANALYSIS/")
+# load packages
+library(lme4)
+library(ggplot2)
+library(ggExtra)
+library(lmerTest)
+library(Hmisc)
+library(effects)
+library(lattice)
+library(MASS)
+library(car)
+library(arsenal)
+library(plyr)
+library(RColorBrewer)
+library(reshape2)
+library(cowplot)
+library(gridGraphics)
+library(ggmosaic)
+library(MuMIn)
+library(hexbin)
+library(nlme)
+
+source("https://gist.githubusercontent.com/benmarwick/2a1bb0133ff568cbe28d/raw/fb53bd97121f7f9ce947837ef1a4c65a73bffb3f/geom_flat_violin.R")
+
+# raincloud plot things
+raincloud_theme = theme(
+text = element_text(size = 10),
+axis.title.x = element_text(size = 8),
+axis.title.y = element_text(size = 8),
+axis.text = element_text(size = 9),
+axis.text.x = element_text(vjust = 0.5),
+legend.title=element_text(size=10),
+legend.text=element_text(size=10),
+legend.position = "right",
+plot.title = element_text(lineheight=.8, face="bold", size = 16),
+panel.border = element_blank(),
+panel.grid.minor = element_blank(),
+panel.grid.major = element_blank(),
+axis.line.x = element_line(colour = 'black', size=0.5, linetype='solid'),
+axis.line.y = element_line(colour = 'black', size=0.5, linetype='solid'))
+
+lb <- function(x) mean(x) - sd(x)
+ub <- function(x) mean(x) + sd(x)
+```
+
+```{r, message=FALSE, cache=FALSE, warning=FALSE, echo=FALSE, fig.width=15, fig.height=6, fig.align="center", eval = TRUE}
+# check if data already exists
+if(!file.exists("S:/AG/AG-CSB_NeuroRad2/khalila/PROJECTS/BD_REPRO/ANALYSIS/temp_df_subs.csv")) {
+
+# BUILD MIXED MODEL DATAFRAME
+# get subject names
+subs <- list.files(path= "S:/AG/AG-CSB_NeuroRad2/khalila/PROJECTS/BD_REPRO/IMAGES/", full.names = F, recursive = F)
+
+# create list of studies + their participants
+csb_h <- c("C01", "C02", "C03", "C04", "C05", "C06", "C07", "C08", "C09", "C10", "C11", "C12")
+csb_s <- c("sub0024","sub0033","sub0045","sub0048","sub0050","sub0055","sub0057","sub0061","sub0066","sub0078","sub0080","sub0088","sub0090","sub0094","sub0096","sub0104","sub0106","sub0108","sub0110","sub0112","sub0114","sub0117","sub0121","sub0129","sub0131","sub0133","sub0135","sub0137","sub0140","sub0144","sub0146")
+msc <- c("msc01","msc02","msc03","msc04","msc05","msc06","msc07","msc08","msc09","msc10")
+mpi <- c("sub_01","sub_02","sub_03","sub_04","sub_05","sub_06","sub_07","sub_08","sub_09","sub_10","sub_12","sub_13","sub_15","sub_16","sub_17","sub_18","sub_19","sub_20","sub_21","sub_22")
+modaf <- c("sub-04","sub-06","sub-07","sub-09","sub-12","sub-13","sub-17","sub-19","sub-20","sub-21","sub-23","sub-24","sub-26")
+yale <- c("sub-032401","sub-032402","sub-032403","sub-032404","sub-032405","sub-032406","sub-032407","sub-032408","sub-032409","sub-032410","sub-032411","sub-032412")
+eegnf <- c("sub-cont01","sub-cont02","sub-cont03","sub-cont04","sub-cont05","sub-cont06","sub-cont07","sub-cont08","sub-cont09","sub-cont10","sub-cont11","sub-cont12","sub-cont13","sub-cont14","sub-cont15","sub-cont16","sub-cont17","sub-cont18","sub-cont19","sub-cont20","sub-cont21","sub-cont22","sub-cont23","sub-cont24","sub-cont25","sub-cont26")
+tbi <- c("sub-control01","sub-control02","sub-control03","sub-control04","sub-control05","sub-control06","sub-control07","sub-control08","sub-control09","sub-control10","sub-control11","sub-control12")
+
+# read in demographics file
+demogr <- read.csv2(file = paste("S:/AG/AG-CSB_NeuroRad2/khalila/PROJECTS/BD_REPRO/ANALYSIS/demographics.csv", sep=";"), header = T)
+
+# loop through subjects
+temp_df_subs <- c()
+for(i in subs) {
+  # loop through censoring
+  temp_df_cens <- c()
+  for (c in c("cens", "nocens")) {
+    
+    # loop through vascular territories
+    temp_df_vt <- c()
+    for (v in c("aca","mca","pca")) {
+      
+      # load values
+      temp_vals_t <- read.table(file = paste("S:/AG/AG-CSB_NeuroRad2/khalila/PROJECTS/BD_REPRO/IMAGES/",i,"/VALS/",i,"_",v,"_",c,"_reldiff_vals_atlas.txt", sep=""), header = F)
+      D0_vals <- read.table(file = paste("S:/AG/AG-CSB_NeuroRad2/khalila/PROJECTS/BD_REPRO/IMAGES/",i,"/VALS/",i,"_",v,"_",c,"_D0_vals_atlas.txt", sep=""), header = F)
+      D0_vals <- D0_vals$V1
+      D1_vals <- read.table(file = paste("S:/AG/AG-CSB_NeuroRad2/khalila/PROJECTS/BD_REPRO/IMAGES/",i,"/VALS/",i,"_",v,"_",c,"_D1_vals_atlas.txt", sep=""), header = F)
+      D1_vals <- D1_vals$V1
+      
+       # get rid of zeros (i.e. ROIs not included in this specific VT)
+      temp_vals <- temp_vals_t[temp_vals_t != 0]
+      D0_vals <- D0_vals[temp_vals_t != 0]
+      D1_vals <- D1_vals[temp_vals_t != 0]
+      
+      # assign values to variable named (subject_censoredornot_vascularterritory)
+      assign(paste(i,c,v, sep="_"), temp_vals)
+      temp_var <- paste(i,c,v, sep="_")
+      
+      assign(paste(i,c,v,"D0",sep="_"), D0_vals)
+      temp_D0 <- paste(i,c,v,"D0",sep="_")
+      
+      assign(paste(i,c,v,"D1",sep="_"), D1_vals)
+      temp_D1 <- paste(i,c,v,"D1",sep="_")
+      
+      # add respective columns to dataframe that represents one subject's vascular territory difference values using one censoring strategy 
+      temp_df <- as.data.frame(get(temp_var))
+
+      
+      temp_df$subject <- rep(i, length(get(temp_var)))
+      temp_df$`get(temp_var)` <- c()
+      temp_df$`get(temp_D0)` <- c()
+      temp_df$`get(temp_D1)` <- c()
+      
+      # create columns for subject-specific info (age, etc)
+      temp_df$age <- rep(demogr[demogr$subject==i,3], length(get(temp_var)))
+      temp_df$gender <- rep(demogr[demogr$subject==i,4], length(get(temp_var)))
+      temp_df$FDmean <- rep(demogr[demogr$subject==i,5], length(get(temp_var)))
+      
+      # create columns for other variables
+      temp_df$cens <- rep(c, length(get(temp_var)))
+      temp_df$vt <- rep(v, length(get(temp_var)))
+      temp_df$diffvals <- get(temp_var)
+      temp_df$D0 <- get(temp_D0)
+      temp_df$D1 <- get(temp_D1)
+      
+      temp_df$study <- NA
+      temp_df$type <- NA
+      temp_df$int <- NA
+      temp_df$tr <- NA
+      temp_df$length <- NA
+      temp_df$field <- NA
+      
+      
+      # create dataframe of one subject's difference values using one censoring strategy for ALL vascular territories
+      temp_df_vt <- rbind(temp_df_vt, temp_df)    
+      
+    }
+    # create dataframe of one subject's difference values using ALL censoring strategies for ALL vascular territories
+    temp_df_cens <- rbind(temp_df_cens, temp_df_vt) 
+    
+    # assign subject to a study and create corresponding columns (with parameters, interval, etc)
+    if (is.element(i, tbi)) {
+      temp_df_cens$study <- rep("tbi", nrow(temp_df_cens)) # NAME OF STUDY
+      temp_df_cens$type <- rep("healthy", nrow(temp_df_cens))
+      temp_df_cens$int <- rep(90, nrow(temp_df_cens)) # INTERVAL BETWEEN SCANS IN DAYS
+      temp_df_cens$tr <- rep(2, nrow(temp_df_cens)) # REPETITION TIME IN SECONDS
+      temp_df_cens$length <- rep(300, nrow(temp_df_cens)) # SCAN LENGTH IN SECONDS
+      temp_df_cens$field <- rep(3, nrow(temp_df_cens)) # FIELD STRENGTH IN TESLA
+    }
+    if (is.element(i, eegnf)) {
+      temp_df_cens$study <- rep("eegnf", nrow(temp_df_cens)) # NAME OF STUDY
+      temp_df_cens$type <- rep("healthy", nrow(temp_df_cens))
+      temp_df_cens$int <- rep(0.02, nrow(temp_df_cens)) # INTERVAL BETWEEN SCANS IN DAYS
+      temp_df_cens$tr <- rep(2, nrow(temp_df_cens)) # REPETITION TIME IN SECONDS
+      temp_df_cens$length <- rep(300, nrow(temp_df_cens)) # SCAN LENGTH IN SECONDS
+      temp_df_cens$field <- rep(3, nrow(temp_df_cens)) # FIELD STRENGTH IN TESLA
+    }
+    if (is.element(i, yale)) {
+      temp_df_cens$study <- rep("yale", nrow(temp_df_cens)) # NAME OF STUDY
+      temp_df_cens$type <- rep("healthy", nrow(temp_df_cens))
+      temp_df_cens$int <- rep(7, nrow(temp_df_cens)) # INTERVAL BETWEEN SCANS IN DAYS
+      temp_df_cens$tr <- rep(1, nrow(temp_df_cens)) # REPETITION TIME IN SECONDS
+      temp_df_cens$length <- rep(360, nrow(temp_df_cens)) # SCAN LENGTH IN SECONDS
+      temp_df_cens$field <- rep(3, nrow(temp_df_cens)) # FIELD STRENGTH IN TESLA
+    }
+    if (is.element(i, modaf)) {
+      temp_df_cens$study <- rep("modaf", nrow(temp_df_cens)) # NAME OF STUDY
+      temp_df_cens$type <- rep("healthy", nrow(temp_df_cens))
+      temp_df_cens$int <- rep(0.25, nrow(temp_df_cens)) # INTERVAL BETWEEN SCANS IN DAYS
+      temp_df_cens$tr <- rep(1.671, nrow(temp_df_cens)) # REPETITION TIME IN SECONDS
+      temp_df_cens$length <- rep(240, nrow(temp_df_cens)) # SCAN LENGTH IN SECONDS
+      temp_df_cens$field <- rep(3, nrow(temp_df_cens)) # FIELD STRENGTH IN TESLA
+    }
+    if (is.element(i, mpi)) {
+      temp_df_cens$study <- rep("mpi", nrow(temp_df_cens)) # NAME OF STUDY
+      temp_df_cens$type <- rep("healthy", nrow(temp_df_cens))
+      temp_df_cens$int <- rep(7, nrow(temp_df_cens)) # INTERVAL BETWEEN SCANS IN DAYS
+      temp_df_cens$tr <- rep(3, nrow(temp_df_cens)) # REPETITION TIME IN SECONDS
+      temp_df_cens$length <- rep(900, nrow(temp_df_cens)) # SCAN LENGTH IN SECONDS
+      temp_df_cens$field <- rep(7, nrow(temp_df_cens)) # FIELD STRENGTH IN TESLA
+    }
+    if (is.element(i, msc)) {
+      temp_df_cens$study <- rep("msc", nrow(temp_df_cens)) # NAME OF STUDY
+      temp_df_cens$type <- rep("healthy", nrow(temp_df_cens))
+      temp_df_cens$int <- rep(1, nrow(temp_df_cens)) # INTERVAL BETWEEN SCANS IN DAYS
+      temp_df_cens$tr <- rep(2.2, nrow(temp_df_cens)) # REPETITION TIME IN SECONDS
+      temp_df_cens$length <- rep(1800, nrow(temp_df_cens)) # SCAN LENGTH IN SECONDS
+      temp_df_cens$field <- rep(3, nrow(temp_df_cens)) # FIELD STRENGTH IN TESLA
+    }
+    if (is.element(i, csb_h)) {
+      temp_df_cens$study <- rep("csb_h", nrow(temp_df_cens)) # NAME OF STUDY
+      temp_df_cens$type <- rep("healthy", nrow(temp_df_cens))
+      temp_df_cens$int <- rep(1, nrow(temp_df_cens)) # INTERVAL BETWEEN SCANS IN DAYS
+      temp_df_cens$tr <- rep(0.4, nrow(temp_df_cens)) # REPETITION TIME IN SECONDS
+      temp_df_cens$length <- rep(340, nrow(temp_df_cens)) # SCAN LENGTH IN SECONDS
+      temp_df_cens$field <- rep(3, nrow(temp_df_cens)) # FIELD STRENGTH IN TESLA
+    }
+    if (is.element(i, csb_s)) {
+      temp_df_cens$study <- rep("csb_s", nrow(temp_df_cens)) # NAME OF STUDY
+      temp_df_cens$type <- rep("stroke", nrow(temp_df_cens))
+      temp_df_cens$int <- rep(1, nrow(temp_df_cens)) # INTERVAL BETWEEN SCANS IN DAYS
+      temp_df_cens$tr <- rep(0.4, nrow(temp_df_cens)) # REPETITION TIME IN SECONDS
+      temp_df_cens$length <- rep(340, nrow(temp_df_cens)) # SCAN LENGTH IN SECONDS
+      temp_df_cens$field <- rep(3, nrow(temp_df_cens)) # FIELD STRENGTH IN TESLA
+    }
+  }
+  
+  # create dataframe of ALL subjects' difference values using ALL censoring strategies for ALL vascular territories
+  temp_df_subs <- rbind(temp_df_subs, temp_df_cens)
+  
+  # write dataframe to CSV file
+  write.csv(temp_df_subs, "S:/AG/AG-CSB_NeuroRad2/khalila/PROJECTS/BD_REPRO/ANALYSIS/temp_df_subs.csv")
+   }} else {
+    # load in prepepared data
+      temp_df_subs <- read.csv("S:/AG/AG-CSB_NeuroRad2/khalila/PROJECTS/BD_REPRO/ANALYSIS/temp_df_subs.csv")
+     demogr <- read.csv2(file = paste("S:/AG/AG-CSB_NeuroRad2/khalila/PROJECTS/BD_REPRO/ANALYSIS/demographics.csv", sep=";"), header = T)
+   }
+
+
+
+```
+
+# Descriptive statistics
+
+```{r, message=FALSE, cache=FALSE, warning=FALSE, echo=FALSE, fig.width=15, fig.height=6, fig.align="center", results = "asis"}
+temp_df_subs$FDmean <- as.numeric(temp_df_subs$FDmean)
+temp_df_subs$study <- as.factor(temp_df_subs$study)
+
+# histograms
+par(mfrow=c(1,3))
+hist(temp_df_subs[temp_df_subs$cens == "nocens",]$D0)
+hist(temp_df_subs[temp_df_subs$cens == "nocens",]$D1)
+hist(temp_df_subs[temp_df_subs$cens == "nocens",]$diffvals)
+
+hist(temp_df_subs[temp_df_subs$cens == "cens",]$D0)
+hist(temp_df_subs[temp_df_subs$cens == "cens",]$D1)
+hist(temp_df_subs[temp_df_subs$cens == "cens",]$diffvals)
+
+# scatter plots
+par(mfrow=c(1,3))
+# for non-censored data
+plot(temp_df_subs[temp_df_subs$cens == "nocens",]$D0, temp_df_subs[temp_df_subs$cens == "nocens",]$D1); abline(coef=c(0,1),col="red")
+plot(temp_df_subs[temp_df_subs$cens == "nocens",]$D0, temp_df_subs[temp_df_subs$cens == "nocens",]$diffvals)
+plot(temp_df_subs[temp_df_subs$cens == "nocens",]$D1, temp_df_subs[temp_df_subs$cens == "nocens",]$diffvals)
+
+# for censored data
+plot(temp_df_subs[temp_df_subs$cens == "cens",]$D0, temp_df_subs[temp_df_subs$cens == "cens",]$D1); abline(coef=c(0,1),col="red")
+plot(temp_df_subs[temp_df_subs$cens == "cens",]$D0, temp_df_subs[temp_df_subs$cens == "cens",]$diffvals)
+plot(temp_df_subs[temp_df_subs$cens == "cens",]$D1, temp_df_subs[temp_df_subs$cens == "cens",]$diffvals)
+par(mfrow=c(1,1))
+```
+
+```{r, message=FALSE, cache=FALSE, warning=FALSE, echo=FALSE, fig.width=7.4, fig.align="center", results = "asis"}
+# get descriptive statistics (by study) - see https://thatdatatho.com/2018/08/20/easily-create-descriptive-summary-statistic-tables-r-studio/
+dataset_names = c("CSB", "LOBI", "NF", "Modafinil", "MPI", "MSC", "TBI", "Yale")
+demogr$FD_mean <- as.numeric(as.character(demogr$FD_mean))
+attr(demogr$age, "label") <- "Age (years)"
+attr(demogr$gender, "label") <- "Gender"
+attr(demogr$FD_mean, "label") <- "Mean FD (mm)"
+levels(temp_df_subs$gender)[levels(temp_df_subs$gender)=="m"] <- "Male"
+levels(temp_df_subs$gender)[levels(temp_df_subs$gender)=="f"] <- "Female"
+temp_df_subs$field <- as.factor(temp_df_subs$field)
+
+
+# get standard deviation across time for each observation (ROI)
+temp_df_subs$std <- apply(temp_df_subs[, c("D0","D1")],1,sd)
+
+# get coefficient of repeatability across time for each observation (ROI)
+temp_df_subs$cor <- temp_df_subs$std*2.77
+
+table_control <- tableby.control(test = F, total = T, numeric.simplify = T, numeric.stats = c("medianq1q3", "Nmiss2"), cat.stats = c("countpct","Nmiss2"), stats.labels = list(medianq1q3="Median (Q1,Q3)", Nmiss2 = "Missing"), digits = 2)
+summary(tableby(study ~  age + gender + FD_mean, data = demogr, control = table_control))
+
+# SET PARAMETERS FOR PLOT
+op <- par(cex = 1.2)
+plot_text <- 10
+line_size <- 0.7
+line_type <- "twodash"
+
+# plot distributions of diffvals by different variables
+# VT
+plot_vt <- ggplot(temp_df_subs[temp_df_subs$cens == "nocens",], aes(diffvals, color=vt)) +
+                           stat_density(geom="line", position = "identity", size = line_size, linetype=line_type) +
+                                  theme_classic(base_size = plot_text) + xlab("Differences (s)") + ylab("Density") +
+                                    theme(plot.margin=unit(c(0.3,0.3,0.3,1),"cm")) +
+                                        scale_color_brewer("Vascular territory", type = "qual", palette = "Set2", labels = c("ACA","MCA","PCA")) 
+
+# TYPE
+plot_type <- ggplot(temp_df_subs[temp_df_subs$cens == "nocens",], aes(diffvals, color=type)) +
+                           stat_density(geom="line", position = "identity", size = line_size, linetype=line_type) +
+                                  theme_classic(base_size = plot_text) + xlab("Differences (s)") + ylab("Density") +
+                                      theme(plot.margin=unit(c(0.3,0.3,0.3,1),"cm")) +
+                                        scale_color_brewer("Group", type = "qual", palette = "Set2", labels = c("Healthy","Stroke"))
+
+# MAGNETIC FIELD STRENGTH
+plot_tesla <- ggplot(temp_df_subs[temp_df_subs$cens == "nocens",], aes(diffvals, color=field)) +
+                           stat_density(geom="line", position = "identity", size = line_size, linetype=line_type) +
+                                  theme_classic(base_size = plot_text) + xlab("Differences (s)") + ylab("Density") +
+                                    theme(plot.margin=unit(c(0.3,0.3,0.3,1),"cm")) +
+                                        scale_color_brewer("Field strength", type = "qual", palette = "Set2", labels = c("3T","7T"))
+
+# CENSORING STRATEGY
+plot_cens <- ggplot(temp_df_subs, aes(diffvals, color=cens)) +
+                           stat_density(geom="line", position = "identity", size = line_size, linetype=line_type) +
+                                  theme_classic(base_size = plot_text) + xlab("Differences (s)") + ylab("Density") +
+                                  theme(plot.margin=unit(c(0.3,0.3,0.3,1),"cm")) +
+                                        scale_color_brewer("Motion censoring", type = "qual", palette = "Set2", labels = c("Yes","No"))
+
+# GENDER
+plot_gender <- ggplot(temp_df_subs[temp_df_subs$cens == "nocens",], aes(diffvals, color=gender)) +
+                          stat_density(geom="line", position = "identity", size = line_size, linetype=line_type) +
+                                  theme_classic(base_size = plot_text) + xlab("Differences (s)") + ylab("Density") +
+                                    theme(plot.margin=unit(c(0.3,0.3,0.3,1),"cm")) +
+                                        scale_color_brewer("Gender", type = "qual", palette = "Set2")
+
+# AGE
+plot_age <- ggplot(temp_df_subs[temp_df_subs$cens == "nocens",], aes(x=age, y=diffvals) ) +
+geom_hex(bins = 32) + scale_fill_gradient(low = "#f7fbff", high = "#08306b", trans = "log10") +
+   xlab("Age (years)") +
+  ylab("Differences (s)") +
+  theme_bw() + 
+  theme(plot.margin=unit(c(0.3,0.5,0.3,1),"cm")) +
+  raincloud_theme
+
+# SET COLOR FOR RAINCLOUD PLOTS
+rc_plot_col = "dodgerblue"
+
+#STUDY
+plot_study <- ggplot(data = temp_df_subs[temp_df_subs$cens == "nocens",], aes(y = diffvals, x = as.factor(study), fill = as.factor(study))) +
+geom_flat_violin(position = position_nudge(x = .2, y = 0), alpha = .8) +
+geom_point(aes(y = diffvals, color = as.factor(study)), position = position_jitter(width = .15), size = .5, alpha = 0.8) +
+geom_boxplot(width = .1, guides = FALSE, outlier.shape = NA, alpha = 0.5) +
+expand_limits(x = 5.25) +
+guides(fill = FALSE) +
+guides(color = FALSE) +
+  ylab("Differences (s)") +
+  xlab("Dataset") +
+  scale_color_brewer(palette = "Dark2") +
+  scale_fill_brewer(palette = "Dark2") +
+  scale_x_discrete(labels=dataset_names) +
+theme_bw() +
+  theme(plot.margin=unit(c(0.3,0,0.3,0.8),"cm")) +
+raincloud_theme
+
+# INTERVAL
+
+plot_int <- ggplot(data = temp_df_subs[temp_df_subs$cens == "nocens",], aes(y = diffvals, x = as.factor(int), fill = as.factor(int))) +
+geom_flat_violin(position = position_nudge(x = .2, y = 0), alpha = .8, fill = rc_plot_col) +
+geom_point(aes(y = diffvals, color = as.factor(int)), position = position_jitter(width = .15), size = .5, alpha = 0.8, colour = "gray52") +
+geom_boxplot(width = .1, guides = FALSE, outlier.shape = NA, alpha = 0.5, fill = rc_plot_col) +
+expand_limits(x = 5.25) +
+guides(fill = FALSE) +
+guides(color = FALSE) +
+  ylab("Differences (s)") +
+  xlab("Interval between scans (days)") +
+theme_bw() +
+  theme(plot.margin=unit(c(0.3,0.3,0.3,1),"cm")) +
+raincloud_theme
+
+# TR
+
+plot_tr <- ggplot(data = temp_df_subs[temp_df_subs$cens == "nocens",], aes(y = diffvals, x = as.factor(tr), fill = as.factor(tr))) +
+geom_flat_violin(position = position_nudge(x = .2, y = 0), alpha = .8, fill = rc_plot_col) +
+geom_point(aes(y = diffvals, color = as.factor(tr)), position = position_jitter(width = .15), size = .5, alpha = 0.8, colour = "gray52") +
+geom_boxplot(width = .1, guides = FALSE, outlier.shape = NA, alpha = 0.5, fill = rc_plot_col) +
+expand_limits(x = 5.25) +
+guides(fill = FALSE) +
+guides(color = FALSE) +
+  ylab("Differences (s)") +
+  xlab("Repetition time (s)") +
+theme_bw() +
+  theme(plot.margin=unit(c(0.3,0.3,0.3,1),"cm")) +
+raincloud_theme
+
+# SCAN LENGTH
+plot_length <- ggplot(data = temp_df_subs[temp_df_subs$cens == "nocens",], aes(y = diffvals, x = as.factor(length), fill = as.factor(length))) +
+geom_flat_violin(position = position_nudge(x = .2, y = 0), alpha = .8, fill = rc_plot_col) +
+geom_point(aes(y = diffvals), position = position_jitter(width = .15), size = .5, alpha = 0.6, colour = "gray52") +
+geom_boxplot(width = .1, guides = FALSE, outlier.shape = NA, alpha = 0.5, fill = rc_plot_col) +
+expand_limits(x = 5.25) +
+guides(fill = FALSE) +
+guides(color = FALSE) +
+  ylab("Differences (s)") +
+  xlab("Scan length (s)") +
+theme_bw() +
+theme(plot.margin=unit(c(0.3,0.3,0.3,1),"cm")) +
+raincloud_theme
+
+# FD MEAN
+plot_FDmean <- ggplot(temp_df_subs[temp_df_subs$cens == "nocens",], aes(x=FDmean, y=diffvals) ) +
+geom_hex(bins = 32) + scale_fill_gradient(low = "#f7fbff", high = "#08306b", trans = "log10") +
+  xlab("Mean framewise displacement (mm)") +
+  ylab("Differences (s)") +
+  theme_bw() + 
+  theme(plot.margin=unit(c(0.3,0.3,0.3,1),"cm")) +
+  raincloud_theme
+
+# plot all 
+png("Figure3.png", width = 12, height =18, units = "cm", res = 300)
+plot_grid(plot_age, plot_gender, plot_study, ncol = 1, labels = "AUTO")
+dev.off()
+png("Figure4.png", width = 19, height = 21, units = "cm", res = 300)
+plot_grid(plot_type, plot_vt, plot_tesla, plot_cens, plot_int, plot_tr, plot_length, plot_FDmean, ncol = 2, labels = "AUTO")
+dev.off()
+```
+
+```{r, message=FALSE, cache=FALSE, warning=FALSE, echo=FALSE, fig.width=7.4, fig.height=12, fig.align="center", results = "asis"}
+# plot demographics
+# get colors used (necessary to skip modafinil in age demo plot)
+dataset_colors <- RColorBrewer::brewer.pal(8,"Dark2")
+# plot age by study
+plot_d_age <- ggplot(temp_df_subs, aes(x=study, y=age, fill=study)) +
+  geom_boxplot(outlier.colour="black", outlier.shape=16,outlier.size=2, notch=FALSE) +
+  scale_x_discrete(labels=dataset_names) +
+  scale_fill_manual(values = dataset_colors[c(1,2,3,5,6,7,8)]) +
+  theme(legend.position = "none") + 
+  theme(plot.margin=unit(c(0.3,0.3,0.3,1),"cm")) +
+  ylab("Age (years)") +
+  xlab("Dataset") 
+
+# plot FD mean by study
+plot_d_FDmean <- ggplot(temp_df_subs, aes(x=study, y=FDmean, fill=study)) +
+  geom_boxplot(outlier.colour="black", outlier.shape=16,outlier.size=2, notch=FALSE) +
+  scale_x_discrete(labels=dataset_names) +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(legend.position = "none") + 
+  theme(plot.margin=unit(c(0.3,0.3,0.3,1),"cm"), axis.title = element_text(size=12)) +
+  ylab("Mean framewise displacement (mm)") +
+  xlab("Dataset")
+
+# plot gender by study
+demogr_temp <- demogr
+demogr_temp$study <- revalue(demogr_temp$study, c("csb_h" = "CSB", "csb_s" = "LOBI", "modaf" = "Modafinil", "mpi" = "MPI", "msc" = "MSC", "eegnf" = "NF", "tbi" = "TBI", "yale" = "Yale"))
+demogr_temp$gender <- revalue(demogr_temp$gender, c("m" = "Male", "f" = "Female"))
+plot_d_gender <- ggplot(data = demogr_temp) + geom_mosaic(aes(x=product(gender,study), fill = gender)) + labs(x = "Dataset", y = "")  + scale_y_continuous(limits = c(0,1), labels = c(0,0.2,0.4,0.6,0.8,1), breaks = c(0,0.2,0.4,0.6,0.8,1)) + scale_fill_manual(name = "",values = c("#66c2a5","#fc8d62")) + theme(legend.position = "top") + theme(plot.margin=unit(c(0.3,0.3,0.3,1),"cm")) 
+
+# plot all
+png("Figure2.png", width = 14, height = 21, units = "cm", res = 300)
+plot_grid(plot_d_age, plot_d_gender, plot_d_FDmean, ncol = 1, labels = "AUTO")
+dev.off()
+```
+
+```{r, message=FALSE, cache=FALSE, warning=FALSE, echo=FALSE, fig.width=7.4, fig.height=12, fig.align="center", results = "asis"}
+# plot BOLD delay values
+  # aca
+    # stroke
+      # censored
+aca_str_cens <- ggplot(temp_df_subs[temp_df_subs$cens=="cens" & temp_df_subs$type=="stroke" & temp_df_subs$vt=="aca",], aes(x=D0, y=D1) ) +
+    geom_hex(bins = 32) + scale_fill_gradient(low = "#fed976", high = "#800026", trans = "log10") +
+    xlab("BOLD delay session 1 (s)") +
+    ylab("BOLD delay session 2 (s)") +
+    xlim(-5,5) +
+   ylim(-5,5) +
+    theme_bw() + 
+    theme(plot.margin=unit(c(0.3,0.5,0.3,1),"cm"),legend.position = "none") 
+  
+      # non-censored
+aca_str_nocens <- ggplot(temp_df_subs[temp_df_subs$cens=="nocens" & temp_df_subs$type=="stroke" & temp_df_subs$vt=="aca",], aes(x=D0, y=D1) ) +
+    geom_hex(bins = 32) + scale_fill_gradient(low = "#fed976", high = "#800026", trans = "log10") +
+    xlab("BOLD delay session 1 (s)") +
+    ylab("BOLD delay session 2 (s)") +
+  xlim(-5,5) +
+   ylim(-5,5) +
+    theme_bw() + 
+    theme(plot.margin=unit(c(0.3,0.5,0.3,1),"cm"),legend.position = "none") 
+  
+    # healthy 
+      # censored
+aca_hea_cens <- ggplot(temp_df_subs[temp_df_subs$cens=="cens" & temp_df_subs$type=="healthy" & temp_df_subs$vt=="aca",], aes(x=D0, y=D1) ) +
+    geom_hex(bins = 32) + scale_fill_gradient(low = "#fed976", high = "#800026", trans = "log10") +
+    xlab("BOLD delay session 1 (s)") +
+    ylab("BOLD delay session 2 (s)") +
+  xlim(-5,5) +
+   ylim(-5,5) +
+    theme_bw() + 
+    theme(plot.margin=unit(c(0.3,0.5,0.3,1),"cm"),legend.position = "none") 
+  
+      # non-censored
+aca_hea_nocens <- ggplot(temp_df_subs[temp_df_subs$cens=="nocens" & temp_df_subs$type=="healthy" & temp_df_subs$vt=="aca",], aes(x=D0, y=D1) ) +
+    geom_hex(bins = 32) + scale_fill_gradient(low = "#fed976", high = "#800026", trans = "log10") +
+    xlab("BOLD delay session 1 (s)") +
+    ylab("BOLD delay session 2 (s)") +
+  xlim(-5,5) +
+   ylim(-5,5) +
+    theme_bw() + 
+    theme(plot.margin=unit(c(0.3,0.5,0.3,1),"cm"),legend.position = "none") 
+
+# mca
+mca_str_cens <- ggplot(temp_df_subs[temp_df_subs$cens=="cens" & temp_df_subs$type=="stroke" & temp_df_subs$vt=="mca",], aes(x=D0, y=D1) ) +
+    geom_hex(bins = 32) + scale_fill_gradient(low = "#fed976", high = "#800026", trans = "log10") +
+    xlab("BOLD delay session 1 (s)") +
+    ylab("BOLD delay session 2 (s)") +
+  xlim(-5,5) +
+   ylim(-5,5) +
+    theme_bw() + 
+    theme(plot.margin=unit(c(0.3,0.5,0.3,1),"cm"),legend.position = "none") 
+  
+      # non-censored
+mca_str_nocens <- ggplot(temp_df_subs[temp_df_subs$cens=="nocens" & temp_df_subs$type=="stroke" & temp_df_subs$vt=="mca",], aes(x=D0, y=D1) ) +
+    geom_hex(bins = 32) + scale_fill_gradient(low = "#fed976", high = "#800026", trans = "log10") +
+    xlab("BOLD delay session 1 (s)") +
+    ylab("BOLD delay session 2 (s)") +
+  xlim(-5,5) +
+   ylim(-5,5) +
+    theme_bw() + 
+    theme(plot.margin=unit(c(0.3,0.5,0.3,1),"cm"),legend.position = "none") 
+  
+    # healthy 
+      # censored
+mca_hea_cens <- ggplot(temp_df_subs[temp_df_subs$cens=="cens" & temp_df_subs$type=="healthy" & temp_df_subs$vt=="mca",], aes(x=D0, y=D1) ) +
+    geom_hex(bins = 32) + scale_fill_gradient(low = "#fed976", high = "#800026", trans = "log10") +
+    xlab("BOLD delay session 1 (s)") +
+    ylab("BOLD delay session 2 (s)") +
+  xlim(-5,5) +
+   ylim(-5,5) +
+    theme_bw() + 
+    theme(plot.margin=unit(c(0.3,0.5,0.3,1),"cm"),legend.position = "none") 
+  
+      # non-censored
+mca_hea_nocens <- ggplot(temp_df_subs[temp_df_subs$cens=="nocens" & temp_df_subs$type=="healthy" & temp_df_subs$vt=="mca",], aes(x=D0, y=D1) ) +
+    geom_hex(bins = 32) + scale_fill_gradient(low = "#fed976", high = "#800026", trans = "log10") +
+    xlab("BOLD delay session 1 (s)") +
+    ylab("BOLD delay session 2 (s)") +
+  xlim(-5,5) +
+   ylim(-5,5) +
+    theme_bw() + 
+    theme(plot.margin=unit(c(0.3,0.5,0.3,1),"cm"),legend.position = "none") 
+
+# pca
+pca_str_cens <- ggplot(temp_df_subs[temp_df_subs$cens=="cens" & temp_df_subs$type=="stroke" & temp_df_subs$vt=="pca",], aes(x=D0, y=D1) ) +
+    geom_hex(bins = 32) + scale_fill_gradient(low = "#fed976", high = "#800026", trans = "log10") +
+    xlab("BOLD delay session 1 (s)") +
+    ylab("BOLD delay session 2 (s)") +
+  xlim(-5,5) +
+   ylim(-5,5) +
+    theme_bw() + 
+    theme(plot.margin=unit(c(0.3,0.5,0.3,1),"cm"),legend.position = "none") 
+  
+      # non-censored
+pca_str_nocens <- ggplot(temp_df_subs[temp_df_subs$cens=="nocens" & temp_df_subs$type=="stroke" & temp_df_subs$vt=="pca",], aes(x=D0, y=D1) ) +
+    geom_hex(bins = 32) + scale_fill_gradient(low = "#fed976", high = "#800026", trans = "log10") +
+    xlab("BOLD delay session 1 (s)") +
+    ylab("BOLD delay session 2 (s)") +
+  xlim(-5,5) +
+  ylim(-5,5) +
+    theme_bw() + 
+    theme(plot.margin=unit(c(0.3,0.5,0.3,1),"cm"),legend.position = "none") 
+  
+    # healthy 
+      # censored
+pca_hea_cens <- ggplot(temp_df_subs[temp_df_subs$cens=="cens" & temp_df_subs$type=="healthy" & temp_df_subs$vt=="pca",], aes(x=D0, y=D1) ) +
+    geom_hex(bins = 32) + scale_fill_gradient(low = "#fed976", high = "#800026", trans = "log10") +
+    xlab("BOLD delay session 1 (s)") +
+    ylab("BOLD delay session 2 (s)") +
+  xlim(-5,5) +
+    theme_bw() + 
+    theme(plot.margin=unit(c(0.3,0.5,0.3,1),"cm"),legend.position = "none") 
+  
+      # non-censored
+pca_hea_nocens <- ggplot(temp_df_subs[temp_df_subs$cens=="nocens" & temp_df_subs$type=="healthy" & temp_df_subs$vt=="pca",], aes(x=D0, y=D1) ) +
+    geom_hex(bins = 32) + scale_fill_gradient(low = "#fed976", high = "#800026", trans = "log10") +
+    xlab("BOLD delay session 1 (s)") +
+    ylab("BOLD delay session 2 (s)") +
+  xlim(-5,5) +
+    theme_bw() + 
+    theme(plot.margin=unit(c(0.3,0.5,0.3,1),"cm"),legend.position = "none") 
+
+# plot all
+png("BD_scatterplot.png", width = 21, height = 14, units = "cm", res = 300)
+plot_grid(aca_hea_nocens,mca_hea_nocens,pca_hea_nocens,aca_str_nocens,mca_str_nocens,pca_str_nocens, ncol = 3, labels = "AUTO")
+dev.off()
+
+```
+
+# Linear mixed model (lmer)
+
+## Model results
+```{r, message=FALSE, cache=FALSE, warning=FALSE, echo=FALSE, fig.width=6, fig.height=6, fig.align="center"}
+# rearrange levels
+temp_df_subs$vt <- as.factor(temp_df_subs$vt)
+temp_df_subs$cens <- as.factor(temp_df_subs$cens)
+temp_df_subs$vt <- factor(temp_df_subs$vt, levels(temp_df_subs$vt)[c(2,3,1)])
+temp_df_subs$cens <- factor(temp_df_subs$cens, levels(temp_df_subs$cens)[c(2,1)])
+temp_df_subs$type <- as.factor(temp_df_subs$type)
+temp_df_subs$field <- as.factor(temp_df_subs$field)
+
+
+# build mixed model - linear mixed model (NB: predictors scaled)
+model1 <- lmer(diffvals ~ D0 + vt + type + I(FDmean*10) + tr + field + I(int/10) + I(length/60) + cens + (1|subject) + (1|study), data = temp_df_subs)
+
+summary(model1)
+```
+
+## Model assumptions
+
+### Linearity
+```{r, message=FALSE, cache=FALSE, warning=FALSE, echo=FALSE, fig.width=6, fig.height=6, fig.align="center"}
+# test assumptions of mixed model (see https://ademos.people.uic.edu/Chapter18.html)
+    #1 LINEARITY
+    plot(resid(model1),temp_df_subs$diffvals)
+```
+
+### Homogeneity of variance
+```{r, message=FALSE, cache=FALSE, warning=FALSE, echo=FALSE, fig.width=6, fig.height=6, fig.align="center"}
+#2 HOMOGENEITY OF VARIANCE 
+    temp_df_subs$model1.res <- residuals(model1) #extracts the residuals and places them in a new column in our original data table
+    temp_df_subs$model1.res.abs <-abs(temp_df_subs$model1.res) #creates a new column with the absolute value of the residuals
+    temp_df_subs$model1.res2 <- temp_df_subs$model1.res.abs^2 #squares the absolute values of the residuals to provide the more robust estimate
+    levene.model1 <- lm(temp_df_subs$model1.res2 ~ subject, data=temp_df_subs) #ANOVA of the squared residuals
+    anova(levene.model1) #displays the results
+    plot(model1) # plots the result
+    
+```
+
+### Normality of residuals
+```{r, message=FALSE, cache=FALSE, warning=FALSE, echo=FALSE, fig.width=6, fig.height=6, fig.align="center"}
+    #3 normality of residuals
+    qqmath(model1)
+```
+
+# Generalized linear mixed model with penalized quasi-likelihood (glmmPQL)
+
+## Model results
+```{r, message=FALSE, cache=FALSE, warning=FALSE, echo=FALSE, fig.width=6, fig.height=6, fig.align="center"}
+# build mixed model - Penalized quasi-likelihood (NB: some predictors scaled - log link function because differences are only positive)
+model3 <- glmmPQL(diffvals ~ D0 + vt + type + I(FDmean*10) + tr + field + I(int/10) + I(length/60) + cens, random=list(study = ~1, subject = ~1), family = Gamma(link="log"), data = temp_df_subs, verbose = FALSE)
+
+summary(model3)
+
+# calculate R^2 for model
+print(r.squaredGLMM(model3))
+
+# calculate 95% CI for fixed effects like this https://bbolker.github.io/mixedmodels-misc/ecostats_chap.html   
+print(intervals(model3,which="fixed"))
+
+```
+
+
+## ICC calculation
+```{r, message=FALSE, cache=FALSE, warning=FALSE, echo=FALSE, fig.width=6, fig.height=6, fig.align="center"}
+library(irr)
+
+# get all values
+### cens
+#### aca
+data_aca_cens <- subset(temp_df_subs, cens=="cens"&vt=="aca")
+#### mca 
+data_mca_cens <- subset(temp_df_subs, cens=="cens"&vt=="mca")
+#### pca
+data_pca_cens <- subset(temp_df_subs, cens=="cens"&vt=="pca")
+
+### nocens
+#### aca
+data_aca_nocens <- subset(temp_df_subs, cens=="nocens"&vt=="aca")
+#### mca 
+data_mca_nocens <- subset(temp_df_subs, cens=="nocens"&vt=="mca")
+#### pca
+data_pca_nocens <- subset(temp_df_subs, cens=="nocens"&vt=="pca")
+
+# calculate ICC (two-way absolute agreement - see recommendations here https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4913118/)"
+print("ACA censored")
+icc(cbind(data_aca_cens$D0,data_aca_cens$D1),"twoway","agreement")
+
+print("MCA censored")
+icc(cbind(data_mca_cens$D0,data_mca_cens$D1),"twoway","agreement")
+
+print("PCA censored")
+icc(cbind(data_pca_cens$D0,data_pca_cens$D1),"twoway","agreement")
+
+print("ACA uncensored")
+icc(cbind(data_aca_nocens$D0,data_aca_nocens$D1),"twoway","agreement")
+
+print("MCA uncensored")
+icc(cbind(data_mca_nocens$D0,data_mca_nocens$D1),"twoway","agreement")
+
+print("PCA uncensored")
+icc(cbind(data_pca_nocens$D0,data_pca_nocens$D1),"twoway","agreement")
+```

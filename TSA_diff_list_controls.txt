@@ -81,10 +81,8 @@ sub_07/TSA_diff.nii.gz
 sub_08/TSA_diff.nii.gz
 sub_09/TSA_diff.nii.gz
 sub_10/TSA_diff.nii.gz
-sub_11/TSA_diff.nii.gz
 sub_12/TSA_diff.nii.gz
 sub_13/TSA_diff.nii.gz
-sub_14/TSA_diff.nii.gz
 sub_15/TSA_diff.nii.gz
 sub_16/TSA_diff.nii.gz
 sub_17/TSA_diff.nii.gz

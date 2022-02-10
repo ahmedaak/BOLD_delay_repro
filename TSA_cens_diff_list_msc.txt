@@ -1,0 +1,10 @@
+msc01/TSA_cens_diff.nii.gz
+msc02/TSA_cens_diff.nii.gz
+msc03/TSA_cens_diff.nii.gz
+msc04/TSA_cens_diff.nii.gz
+msc05/TSA_cens_diff.nii.gz
+msc06/TSA_cens_diff.nii.gz
+msc07/TSA_cens_diff.nii.gz
+msc08/TSA_cens_diff.nii.gz
+msc09/TSA_cens_diff.nii.gz
+msc10/TSA_cens_diff.nii.gz
